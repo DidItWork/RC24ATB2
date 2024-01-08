@@ -43,6 +43,7 @@ Adafruit_PWMServoDriver pwm = Adafruit_PWMServoDriver();
 //#define SERVOMAX 600
 //#define SERVOMIN 150
 #define PS4_THRESH 15
+#define CLAW_SPEED 100
 
 //const byte interruptPin = 16;
 const byte channelAmount = 10;
@@ -56,7 +57,7 @@ const int minSpd = 0;
 int signals[7] = {0,0,0,0,0,0,0}; //[Pivot Turn, Forward/Backward, Rock Claw, Left/Right, Lift, Intake, Flag Claw]
 int mecWhlCalcHolder[4] = {0,0,0,0};
 int speeds[7] = {0,0,0,0,0,0,0}; //[FM_R, FM_L, RM_R, RM_L, LIFT, INTAKE, ROCK_CLAW]
-float rock_claw_pos = 0.0; //0.0 - 1.0
+double rock_claw_pos = 0.0; //0.0 - 1.0
 // int dir[2] = {0,0};
 int SERVOMIN[13] = {400,150,400,400,400,400,400,400,400,400,400,400,400};
 int SERVOMAX[13] = {600,1000,600,600,600,600,600,600,600,600,600,600,600};
@@ -228,18 +229,18 @@ void lift(){
   if(speeds[4]>0){
 //    analogWrite(LIFT_1, speeds[4]);  
 //    analogWrite(LIFT_2, 0);
-    pwm.setPWM(LIFT_1, 0, speeds[4]);
-    pwm.setPWM(LIFT_2, 0, 0);
+    pwm.setPin(LIFT_1, speeds[4]);
+    pwm.setPin(LIFT_2, 0);
   }else if(speeds[4]<0){
 //    analogWrite(LIFT_1, 0);
 //    analogWrite(LIFT_2, -speeds[4]);
-    pwm.setPWM(LIFT_1, 0, 0);
-    pwm.setPWM(LIFT_2, 0, -speeds[4]);
+    pwm.setPin(LIFT_1, 0);
+    pwm.setPin(LIFT_2, -speeds[4]);
   }else{
 //    digitalWrite(LIFT_1,1);
 //    digitalWrite(LIFT_2,1);
-    pwm.setPWM(LIFT_1, 4096, 0);
-    pwm.setPWM(LIFT_2, 4096, 0);
+    pwm.setPin(LIFT_1, 4095);
+    pwm.setPin(LIFT_2, 4095);
   }
 }
 //
@@ -249,22 +250,22 @@ void intake(){
     digitalWrite(INTAKE_1, HIGH);
     digitalWrite(INTAKE_2, LOW);
 //    analogWrite(INTAKE_PWM, speeds[5]);
-    pwm.setPWM(INTAKE_PWM, 0, speeds[5]);
+    pwm.setPin(INTAKE_PWM, speeds[5]);
   }else{
     digitalWrite(INTAKE_1, LOW);
     digitalWrite(INTAKE_2, HIGH);
 //    analogWrite(INTAKE_PWM, -speeds[5]);
-    pwm.setPWM(INTAKE_PWM, 0, -speeds[5]);
+    pwm.setPin(INTAKE_PWM, -speeds[5]);
   }
 }
 
-void runServo(int servonum, float pos){
+void runServo(int servonum, double pos){
 
   //speed from 0 to 255
 
   uint16_t val = pos*(SERVOMAX[servonum]-SERVOMIN[servonum])+SERVOMIN[servonum];
 
-//  Serial.println(String(servonum)+" Servo pos: "+String(val));
+  Serial.println(String(servonum)+" Servo pos: "+String(val));
 
   pwm.setPin(servonum, val);
 
@@ -458,12 +459,13 @@ void loop() {
   }
 
   //Big Rock Claw Servo (Position)
-  rock_claw_pos += signals[2]/255.0*0.05;
-  Serial.println("rock claw pos: "+String(rock_claw_pos));
+//  rock_claw_pos += signals[2]/255.0;
+  rock_claw_pos = 1.0*(pwm.getPWM(ROCK_CLAW1, true)-SERVOMIN[ROCK_CLAW1])/(SERVOMAX[ROCK_CLAW1]-SERVOMIN[ROCK_CLAW1])+signals[2]*1.0/CLAW_SPEED/255;
+  Serial.println("rock claw pos: "+String(rock_claw_pos)+"\t"+String(pwm.getPWM(ROCK_CLAW1, true))+"\t"+String(CLAW_SPEED));
   if(rock_claw_pos>1){
-    rock_claw_pos = 1.0;
+    rock_claw_pos = 1;
   }else if(rock_claw_pos<0){
-    rock_claw_pos = 0.0;
+    rock_claw_pos = 0;
   }
 
   //Lift
@@ -497,7 +499,7 @@ void loop() {
 //  runServo(ROCK_CLAW2,1.0-rock_claw_pos);
 
   //Flag Claw Servo, 0 or 1 (open or close)
-//  runServo(FLAG_CLAW, signals[6]/255);
+  runServo(FLAG_CLAW, signals[6]/255);
 
 //  uint16_t val = 400;
 //  
