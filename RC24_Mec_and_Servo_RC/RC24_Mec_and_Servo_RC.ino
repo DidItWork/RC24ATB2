@@ -11,21 +11,21 @@ Adafruit_PWMServoDriver pwm = Adafruit_PWMServoDriver();
 
 #define FM_R1 32 //19
 #define FM_R2 33 //4
-#define FM_RPWM 12 //change
+#define FM_RPWM 14
 
 #define RM_L1 15
-#define RM_L2 2
+#define RM_L2 27 
 #define RM_LPWM 5 // 5
 
 #define RM_R1 26
 #define RM_R2 25
 #define RM_RPWM 13
-
+  
 #define LIFT_1 14 
 #define LIFT_2 15
 
-#define INTAKE_1 27
-#define INTAKE_2 14
+#define INTAKE_1 2 //BOOTSTRAP PIN
+#define INTAKE_2 12 //BOOTSTRAP PIN
 #define INTAKE_PWM 13
 
 #define FLAG_CLAW 7
@@ -482,6 +482,9 @@ void loop() {
   lift();
   intake();
 //  motorLogicCheck();
+  if(motorStates == B11111111){
+    motorStates = B00000000;
+  }
   runMotors();
 
   //Big Rock Claw Servo
@@ -498,6 +501,8 @@ void loop() {
 //  }
 
 //  pwm.setPWM(FLAG_CLAW,0,signals[6]/255);
+
+  
   
   Serial.println(String(signals[0])+"\t"+String(signals[1])+"\t"+String(signals[2])+"\t"+String(signals[3])+"\t"+String(signals[4])+"\t"+String(signals[5])+"\t"+String(signals[6]));
   delay(10);
