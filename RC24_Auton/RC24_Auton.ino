@@ -42,7 +42,7 @@ Adafruit_PWMServoDriver pwm = Adafruit_PWMServoDriver();
 #define USMAX  2400 // This is the rounded 'maximum' microsecond length based on the maximum pulse of 600
 #define SERVO_FREQ 50 // Analog servos run at ~50 Hz updates
 #define PS4_THRESH 15
-#define CLAW_SPEED 150
+#define CLAW_SPEED 100
 
 const byte channelAmount = 10;
 
@@ -55,23 +55,25 @@ int mecWhlCalcHolder[4] = {0,0,0,0};
 int speeds[7] = {0,0,0,0,0,0,0}; //[FM_R, FM_L, RM_R, RM_L, LIFT, INTAKE, ROCK_CLAW]
 double rock_claw_pos = 0.0; //0.0 - 1.0
 // int dir[2] = {0,0};
-int SERVOMIN[13] = {150,150,150,150,150,150,150,150,150,150,150,150,150};
-int SERVOMAX[13] = {350,500,350,350,350,350,350,350,350,350,350,350,350};
+int SERVOMIN[13] = {400,150,400,400,400,400,400,400,400,400,400,400,400};
+int SERVOMAX[13] = {600,1000,600,600,600,600,600,600,600,600,600,600,600};
 IBusBM IBus;
-bool preset = false;
 
 byte motorStates = B11111111;
-byte liftIntakeStates = B11111111;
+byte liftIntakeStates = B00001111;
 
 //Left Stick Y-Axis (Channel 2) Controls Forward/Backward Movement
 //Left Stick X-Axis (Channel 4) Controls L/R Strafing
 //Right Stick X-Axis (Channel 1) Controls CW/CCW Rotation
 
 void analogMixing(){
-  mecWhlCalcHolder[0] = (signals[1]-signals[3]-signals[0])/3;
-  mecWhlCalcHolder[1] = (signals[1]+signals[3]+signals[0])/3;
-  mecWhlCalcHolder[2] = (signals[1]+signals[3]-signals[0])/3;
-  mecWhlCalcHolder[3] = (signals[1]-signals[3]+signals[0])/3;
+
+  motorStates = B11111111;
+
+  mecWhlCalcHolder[0] = signals[1]-signals[3]-signals[0];
+  mecWhlCalcHolder[1] = signals[1]+signals[3]+signals[0];
+  mecWhlCalcHolder[2] = signals[1]+signals[3]-signals[0];
+  mecWhlCalcHolder[3] = signals[1]-signals[3]+signals[0];
   
   //Right Front Wheel
   if(mecWhlCalcHolder[0] > 0){
@@ -119,6 +121,7 @@ void analogMixing(){
 
 void lift(){
   //move lift
+  speeds[4] = (int)(signals[4]/255.0*4095);
   if(speeds[4]>0){
     pwm.setPin(LIFT_1, speeds[4]);
     pwm.setPin(LIFT_2, 0);
@@ -133,15 +136,15 @@ void lift(){
 
 void intake(){
   //move intake
+  speeds[5] = (int)(signals[5]/255.0*4095);
+  Serial.println(String(speeds[5]));
   if(speeds[5]>0){
     digitalWrite(INTAKE_1, HIGH);
     digitalWrite(INTAKE_2, LOW);
-//    analogWrite(INTAKE_PWM, speeds[5]);
     pwm.setPin(INTAKE_PWM, speeds[5]);
   }else{
     digitalWrite(INTAKE_1, LOW);
     digitalWrite(INTAKE_2, HIGH);
-//    analogWrite(INTAKE_PWM, -speeds[5]);
     pwm.setPin(INTAKE_PWM, -speeds[5]);
   }
 }
@@ -200,18 +203,48 @@ void runMotors(){
   
 }
 
-void setServoPulse(uint8_t n, double pulse) {
-  double pulselength;
-  // pulselength = map(degrees, 0, 180, SERVOMIN, SERVOMAX);
-  pulselength = 1000000;   // 1,000,000 us per second
-  pulselength /= SERVO_FREQ;   // Analog servos run at ~60 Hz updates
-  Serial.print(pulselength); Serial.println(" us per period"); 
-  pulselength /= 4096;  // 12 bits of resolution
-  Serial.print(pulselength); Serial.println(" us per bit"); 
-  pulse *= 1000000;  // convert input seconds to us
-  pulse /= pulselength;
-  Serial.println(pulse);
-  pwm.setPWM(n, 0, pulse);
+void stopMotors(){
+  digitalWrite(FM_R1, HIGH);
+  digitalWrite(FM_R2, HIGH);
+  analogWrite(FM_RPWM, 0);
+
+  digitalWrite(FM_L1, HIGH);
+  digitalWrite(FM_L2, HIGH);
+  analogWrite(FM_LPWM, 0);
+
+  digitalWrite(RM_R1, HIGH);
+  digitalWrite(RM_R2, HIGH);
+  analogWrite(RM_RPWM, 0);
+
+  digitalWrite(RM_L1, HIGH);
+  digitalWrite(RM_L2, HIGH);
+  analogWrite(RM_LPWM, 0);
+}
+
+void moveMotors(int speed_x, int speed_y, int speed_r, float duration){
+
+  signals[0] = speed_r;
+  signals[1] = speed_x;
+  signals[3] = speed_y;
+  analogMixing();
+  runMotors();
+  delay(duration*1000); //ms
+  stopMotors();
+
+}
+
+void lift_auto(int speed, float duration){
+  signals[4] = speed;
+  lift();
+  delay(duration*1000);
+  signals[4] = 0;
+  lift();
+}
+
+void intake_auto(int speed){
+  signals[5] = speed;
+  Serial.println(String(speed));
+  intake();
 }
 
 void setup() {
@@ -236,7 +269,7 @@ void setup() {
   Serial.begin(115200);
 
   //Fly Sky Controller
-  IBus.begin(Serial2,1); 
+  // IBus.begin(Serial2,1); 
 
   //Servo stuff
   pwm.begin();
@@ -245,10 +278,68 @@ void setup() {
   pwm.setPWMFreq(SERVO_FREQ);  // Analog servos run at ~50 Hz updates
 
   //PS4 Controller
-  PS4.begin();
+  // PS4.begin();
+
+  Serial.println("Starting Auton");
 
   delay(1000);
 
+  auton();
+
+}
+
+void auton(){
+
+  int low_speed = 100;
+  int medium_speed = 150;
+  int top_speed = 200;
+
+  int stop_time = 2000;
+
+  Serial.println("Intake ON");
+  intake_auto(-medium_speed);
+
+  delay(2000);
+
+  Serial.println("Reversing");
+  moveMotors(-low_speed,0,0,3);
+
+  delay(2000);
+
+  Serial.println("Rotate CCW");
+  moveMotors(0,0,-low_speed,3);
+
+  delay(2000);
+
+  Serial.println("Forward");
+  moveMotors(low_speed,0,0,2);
+
+  delay(2000);
+
+  Serial.println("Reversing");
+  moveMotors(-low_speed,0,0,15);
+
+  delay(2000);
+
+  Serial.println("Forward");
+  moveMotors(low_speed,0,0,0.5);
+
+  delay(2000);
+
+  Serial.println("Rotate CCW");
+  moveMotors(0,0,-low_speed,3);
+
+  delay(2000);
+
+  Serial.println("Reversing");
+  moveMotors(-low_speed,0,0,3);
+
+  delay(2000);
+
+  Serial.println("Depositing");
+  intake_auto(medium_speed);
+
+  delay(2000);
 }
 
 void loop() {
@@ -265,97 +356,14 @@ void loop() {
     //Channel 8: Intake Out 
     //Channel 9: Flag Claw
     //Channel 10: 
-    
-    for(int channel = 0;channel < channelAmount; ++channel){
-      channelValues[channel] = IBus.readChannel(channel);
-      if(channelValues[channel] > 2000 || channelValues[channel] < 1000){
-        channelValues[channel] = 1500;
-      }
-    }
 
-    //Speed Reset
-    for(int i = 0; i < sizeof(speeds)/sizeof(speeds[0]); i++){
-      speeds[i] = 0;
-    }
-    motorStates = B11111111;
-
-    preset = false;
-
-  //Movements
-  for(byte key = 0; key < 4; ++key){
-    if(abs((int)channelValues[key]-NEUTRAL_PPM)>=TOLERANCE){
-      signals[key] = round(((float)((int)channelValues[key]-NEUTRAL_PPM)/(HIGH_PPM-NEUTRAL_PPM))*255); 
-    }else{
-      signals[key] = 0;
-    }   
-  }
+    //Speed ReseT
 
   //Lift
-  signals[4] = round(((float)((int)channelValues[5]-NEUTRAL_PPM)/(HIGH_PPM-NEUTRAL_PPM))*255);
-
-  //Big Claw
-  signals[2] = round(((float)((int)channelValues[4]-NEUTRAL_PPM)/(HIGH_PPM-NEUTRAL_PPM))*255);
-
-  //Intake Motor
-  signals[5] = (int)(channelValues[6]>NEUTRAL_PPM)*255-(int)(channelValues[7]>NEUTRAL_PPM)*255;
-
-  if (PS4.isConnected()) {
-    if(abs(PS4.LStickY())>PS4_THRESH){
-      signals[4] = (int)(PS4.LStickY()/128.0*255);
-    }else{
-      signals[4] = 0;
-    }
-    if(abs(PS4.RStickY())>PS4_THRESH){
-      signals[2] = (int)(PS4.RStickY()/128.0*255);
-    }else{
-      signals[2] = 0;
-    }
-//    signals[5] = PS4.R2Value()-PS4.L2Value();
-    if(PS4.R1()){
-      signals[6] = 0;
-    }
-
-    if(PS4.L1()){
-      signals[6] = 255;
-    }
-
-    if(PS4.Square()){
-      preset = true;
-      rock_claw_pos = 0.15;
-    }
-
-    if(PS4.Triangle()){
-      preset = true;
-      rock_claw_pos = 0.8;
-    }
-
-    if(PS4.Cross()){
-      preset = true;
-      rock_claw_pos = 0.0;
-    }
-  }else{
-    //Flag Servo
-    signals[6] = (int)(channelValues[8]>NEUTRAL_PPM)*255;
-  }
-
-  //Big Rock Claw Servo (Position)
-
-  if(!preset){
-    rock_claw_pos = 1.0*(pwm.getPWM(ROCK_CLAW1, true)-SERVOMIN[ROCK_CLAW1])/(SERVOMAX[ROCK_CLAW1]-SERVOMIN[ROCK_CLAW1])+signals[2]*1.0/CLAW_SPEED/255;
-    Serial.println("rock claw pos: "+String(rock_claw_pos)+"\t"+String(pwm.getPWM(ROCK_CLAW1, true))+"\t"+String(CLAW_SPEED));
-    if(rock_claw_pos>1){
-      rock_claw_pos = 1;
-    }else if(rock_claw_pos<0){
-      rock_claw_pos = 0;
-    }
-  }
-  
-
-  //Lift
-  speeds[4] = (int)(signals[4]/255.0*4095);
+  // speeds[4] = (int)(signals[4]/255.0*4095);
 
   //Intake
-  speeds[5] = (int)(signals[5]/255.0*4095);
+  // speeds[5] = (int)(signals[5]/255.0*4095);
 
   //REVERSE KEY, FLIP R Middle switch towards operator to reverse the "front" of robot **UNCOMMENT TO IMPLEMENT**
 //    if(channelValues[7] > HIGH_PPM-30){
@@ -363,22 +371,8 @@ void loop() {
 //        signals[key] = -1*signals[key];
 //      }
 //    }
-  analogMixing();
-
-  lift();
-  intake();
-//  motorLogicCheck();
-  if(motorStates == B11111111){
-    motorStates = B00000000;
-  }
-  runMotors();
-
-  //Big Rock Claw Servo
-  runServo(ROCK_CLAW1, rock_claw_pos);
-
-  //Flag Claw Servo, 0 or 1 (open or close)
-  runServo(FLAG_CLAW, signals[6]/255);
+  Serial.println("ALL DONE!");
   
-  Serial.println(String(signals[0])+"\t"+String(signals[1])+"\t"+String(signals[2])+"\t"+String(signals[3])+"\t"+String(signals[4])+"\t"+String(signals[5])+"\t"+String(signals[6]));
+  // Serial.println(String(signals[0])+"\t"+String(signals[1])+"\t"+String(signals[2])+"\t"+String(signals[3])+"\t"+String(signals[4])+"\t"+String(signals[5])+"\t"+String(signals[6]));
   delay(10);
 }
