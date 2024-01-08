@@ -42,7 +42,7 @@ Adafruit_PWMServoDriver pwm = Adafruit_PWMServoDriver();
 #define USMAX  2400 // This is the rounded 'maximum' microsecond length based on the maximum pulse of 600
 #define SERVO_FREQ 50 // Analog servos run at ~50 Hz updates
 #define PS4_THRESH 15
-#define CLAW_SPEED 100
+#define CLAW_SPEED 150
 
 const byte channelAmount = 10;
 
@@ -55,12 +55,13 @@ int mecWhlCalcHolder[4] = {0,0,0,0};
 int speeds[7] = {0,0,0,0,0,0,0}; //[FM_R, FM_L, RM_R, RM_L, LIFT, INTAKE, ROCK_CLAW]
 double rock_claw_pos = 0.0; //0.0 - 1.0
 // int dir[2] = {0,0};
-int SERVOMIN[13] = {400,150,400,400,400,400,400,400,400,400,400,400,400};
-int SERVOMAX[13] = {600,1000,600,600,600,600,600,600,600,600,600,600,600};
+int SERVOMIN[13] = {150,150,150,150,150,150,150,150,150,150,150,150,150};
+int SERVOMAX[13] = {350,500,350,350,350,350,350,350,350,350,350,350,350};
 IBusBM IBus;
+bool preset = false;
 
 byte motorStates = B11111111;
-byte liftIntakeStates = B00001111;
+byte liftIntakeStates = B11111111;
 
 //Left Stick Y-Axis (Channel 2) Controls Forward/Backward Movement
 //Left Stick X-Axis (Channel 4) Controls L/R Strafing
@@ -278,6 +279,8 @@ void loop() {
     }
     motorStates = B11111111;
 
+    preset = false;
+
   //Movements
   for(byte key = 0; key < 4; ++key){
     if(abs((int)channelValues[key]-NEUTRAL_PPM)>=TOLERANCE){
@@ -293,6 +296,9 @@ void loop() {
   //Big Claw
   signals[2] = round(((float)((int)channelValues[4]-NEUTRAL_PPM)/(HIGH_PPM-NEUTRAL_PPM))*255);
 
+  //Intake Motor
+  signals[5] = (int)(channelValues[6]>NEUTRAL_PPM)*255-(int)(channelValues[7]>NEUTRAL_PPM)*255;
+
   if (PS4.isConnected()) {
     if(abs(PS4.LStickY())>PS4_THRESH){
       signals[4] = (int)(PS4.LStickY()/128.0*255);
@@ -304,31 +310,46 @@ void loop() {
     }else{
       signals[2] = 0;
     }
-    signals[5] = PS4.R2Value()-PS4.L2Value();
+//    signals[5] = PS4.R2Value()-PS4.L2Value();
     if(PS4.R1()){
-      signals[6] = 255;
+      signals[6] = 0;
     }
 
     if(PS4.L1()){
-      signals[6] = 0;
+      signals[6] = 255;
+    }
+
+    if(PS4.Square()){
+      preset = true;
+      rock_claw_pos = 0.15;
+    }
+
+    if(PS4.Triangle()){
+      preset = true;
+      rock_claw_pos = 0.8;
+    }
+
+    if(PS4.Cross()){
+      preset = true;
+      rock_claw_pos = 0.0;
     }
   }else{
-    //Intake Motor
-    signals[5] = (int)(channelValues[6]>NEUTRAL_PPM)*255-(int)(channelValues[7]>NEUTRAL_PPM)*255;
-  
     //Flag Servo
     signals[6] = (int)(channelValues[8]>NEUTRAL_PPM)*255;
   }
 
   //Big Rock Claw Servo (Position)
 
-  rock_claw_pos = 1.0*(pwm.getPWM(ROCK_CLAW1, true)-SERVOMIN[ROCK_CLAW1])/(SERVOMAX[ROCK_CLAW1]-SERVOMIN[ROCK_CLAW1])+signals[2]*1.0/CLAW_SPEED/255;
-  Serial.println("rock claw pos: "+String(rock_claw_pos)+"\t"+String(pwm.getPWM(ROCK_CLAW1, true))+"\t"+String(CLAW_SPEED));
-  if(rock_claw_pos>1){
-    rock_claw_pos = 1;
-  }else if(rock_claw_pos<0){
-    rock_claw_pos = 0;
+  if(!preset){
+    rock_claw_pos = 1.0*(pwm.getPWM(ROCK_CLAW1, true)-SERVOMIN[ROCK_CLAW1])/(SERVOMAX[ROCK_CLAW1]-SERVOMIN[ROCK_CLAW1])+signals[2]*1.0/CLAW_SPEED/255;
+    Serial.println("rock claw pos: "+String(rock_claw_pos)+"\t"+String(pwm.getPWM(ROCK_CLAW1, true))+"\t"+String(CLAW_SPEED));
+    if(rock_claw_pos>1){
+      rock_claw_pos = 1;
+    }else if(rock_claw_pos<0){
+      rock_claw_pos = 0;
+    }
   }
+  
 
   //Lift
   speeds[4] = (int)(signals[4]/255.0*4095);
