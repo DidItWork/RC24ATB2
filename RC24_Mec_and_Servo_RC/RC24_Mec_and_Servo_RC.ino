@@ -32,6 +32,7 @@ Adafruit_PWMServoDriver pwm = Adafruit_PWMServoDriver();
 #define ROCK_CLAW1 1
 #define ROCK_CLAW2 2
 
+#define SERVO_SPD_MPLIER (1/40)
 
 #define TOLERANCE 30
 #define NEUTRAL_PPM 1500
