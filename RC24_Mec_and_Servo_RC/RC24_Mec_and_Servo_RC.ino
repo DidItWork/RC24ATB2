@@ -389,6 +389,9 @@ void loop() {
     
     for(int channel = 0;channel < channelAmount; ++channel){
       channelValues[channel] = IBus.readChannel(channel);
+      if(channelValues[channel] > 2000 || channelValues[channel] < 1000){
+        channelValues[channel] = 1500;
+      }
     }
 
     //Speed Reset
