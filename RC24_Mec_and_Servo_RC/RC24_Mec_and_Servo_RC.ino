@@ -119,23 +119,17 @@ void analogMixing(){
 void lift(){
   //move lift
   if(speeds[4]>0){
-//    analogWrite(LIFT_1, speeds[4]);  
-//    analogWrite(LIFT_2, 0);
     pwm.setPin(LIFT_1, speeds[4]);
     pwm.setPin(LIFT_2, 0);
   }else if(speeds[4]<0){
-//    analogWrite(LIFT_1, 0);
-//    analogWrite(LIFT_2, -speeds[4]);
     pwm.setPin(LIFT_1, 0);
     pwm.setPin(LIFT_2, -speeds[4]);
   }else{
-//    digitalWrite(LIFT_1,1);
-//    digitalWrite(LIFT_2,1);
     pwm.setPin(LIFT_1, 4095);
     pwm.setPin(LIFT_2, 4095);
   }
 }
-//
+
 void intake(){
   //move intake
   if(speeds[5]>0){
