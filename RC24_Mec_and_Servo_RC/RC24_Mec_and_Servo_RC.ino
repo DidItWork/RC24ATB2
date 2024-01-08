@@ -55,7 +55,7 @@ int mecWhlCalcHolder[4] = {0,0,0,0};
 int speeds[7] = {0,0,0,0,0,0,0}; //[FM_R, FM_L, RM_R, RM_L, LIFT, INTAKE, ROCK_CLAW]
 double rock_claw_pos = 0.0; //0.0 - 1.0
 // int dir[2] = {0,0};
-int SERVOMIN[13] = {150,150,150,150,150,150,150,150,150,150,150,150,150};
+int SERVOMIN[13] = {180,150,180,180,180,180,180,180,180,180,180,180,180};
 int SERVOMAX[13] = {350,500,350,350,350,350,350,350,350,350,350,350,350};
 IBusBM IBus;
 bool preset = false;
@@ -68,10 +68,10 @@ byte liftIntakeStates = B11111111;
 //Right Stick X-Axis (Channel 1) Controls CW/CCW Rotation
 
 void analogMixing(){
-  mecWhlCalcHolder[0] = (signals[1]-signals[3]-signals[0])/3;
-  mecWhlCalcHolder[1] = (signals[1]+signals[3]+signals[0])/3;
-  mecWhlCalcHolder[2] = (signals[1]+signals[3]-signals[0])/3;
-  mecWhlCalcHolder[3] = (signals[1]-signals[3]+signals[0])/3;
+  mecWhlCalcHolder[0] = signals[1]-signals[3]-signals[0];
+  mecWhlCalcHolder[1] = signals[1]+signals[3]+signals[0];
+  mecWhlCalcHolder[2] = signals[1]+signals[3]-signals[0];
+  mecWhlCalcHolder[3] = signals[1]-signals[3]+signals[0];
   
   //Right Front Wheel
   if(mecWhlCalcHolder[0] > 0){
@@ -181,7 +181,7 @@ void motorLogicCheck(){
 }
 
 void runMotors(){
-
+//  Serial.println("Speeds: "+String(speeds[0])+"\t"+String(speeds[1])+"\t"+String(speeds[2])+"\t"+String(speeds[3])+"\t");
   digitalWrite(FM_R1, bitRead(motorStates, 7));
   digitalWrite(FM_R2, bitRead(motorStates, 6));
   analogWrite(FM_RPWM, speeds[0]);
