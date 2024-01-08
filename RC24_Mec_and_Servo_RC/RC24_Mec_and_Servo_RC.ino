@@ -67,10 +67,10 @@ byte liftIntakeStates = B00001111;
 //Right Stick X-Axis (Channel 1) Controls CW/CCW Rotation
 
 void analogMixing(){
-  mecWhlCalcHolder[0] = signals[1]-signals[3]-signals[0];
-  mecWhlCalcHolder[1] = signals[1]+signals[3]+signals[0];
-  mecWhlCalcHolder[2] = signals[1]+signals[3]-signals[0];
-  mecWhlCalcHolder[3] = signals[1]-signals[3]+signals[0];
+  mecWhlCalcHolder[0] = (signals[1]-signals[3]-signals[0])/3;
+  mecWhlCalcHolder[1] = (signals[1]+signals[3]+signals[0])/3;
+  mecWhlCalcHolder[2] = (signals[1]+signals[3]-signals[0])/3;
+  mecWhlCalcHolder[3] = (signals[1]-signals[3]+signals[0])/3;
   
   //Right Front Wheel
   if(mecWhlCalcHolder[0] > 0){
