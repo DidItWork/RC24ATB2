@@ -32,6 +32,7 @@ Adafruit_PWMServoDriver pwm = Adafruit_PWMServoDriver();
 #define ROCK_CLAW1 1
 #define ROCK_CLAW2 2
 
+#define SERVO_SPD_MPLIER (1/40)
 
 #define TOLERANCE 30
 #define NEUTRAL_PPM 1500
@@ -40,20 +41,15 @@ Adafruit_PWMServoDriver pwm = Adafruit_PWMServoDriver();
 #define USMIN  600 // This is the rounded 'minimum' microsecond length based on the minimum pulse of 150
 #define USMAX  2400 // This is the rounded 'maximum' microsecond length based on the maximum pulse of 600
 #define SERVO_FREQ 50 // Analog servos run at ~50 Hz updates
-//#define SERVOMAX 600
-//#define SERVOMIN 150
 #define PS4_THRESH 15
 #define CLAW_SPEED 100
 
-//const byte interruptPin = 16;
 const byte channelAmount = 10;
-//PPMReader ppm(interruptPin, channelAmount);
+
 int state = 0;
 unsigned channelValues[10] = {1500, 1500, 1000, 1500, 1500, 1500, 1500, 15000, 1500, 1500};
 const int maxSpd = 255;
 const int minSpd = 0;
-//bool lStickNeutral = true;
-//bool rStickNeutral = true;
 int signals[7] = {0,0,0,0,0,0,0}; //[Pivot Turn, Forward/Backward, Rock Claw, Left/Right, Lift, Intake, Flag Claw]
 int mecWhlCalcHolder[4] = {0,0,0,0};
 int speeds[7] = {0,0,0,0,0,0,0}; //[FM_R, FM_L, RM_R, RM_L, LIFT, INTAKE, ROCK_CLAW]
@@ -79,12 +75,10 @@ void analogMixing(){
   //Right Front Wheel
   if(mecWhlCalcHolder[0] > 0){
       motorStates &= B10111111;
-//      Serial.println("Problem Script Working");
   }else if(mecWhlCalcHolder[0] < 0){
       motorStates &= B01111111;
   }else{
       motorStates &= B00111111;
-//      Serial.println("Channel 1 zeroed");
   }
   speeds[0] = min(abs(mecWhlCalcHolder[0]),255);
 
@@ -121,108 +115,6 @@ void analogMixing(){
 //  Serial.println("Speeds: "+String(speeds[0])+"\t"+String(speeds[1])+"\t"+String(speeds[2])+"\t"+String(speeds[3])+"\t");
   
 }
-
-int addSpeeds(int A, int B){
-  //**PURE ADDITIVE IMPLEMENTATION**
-  return min(A+B, 255);
-  //**END**//
-  //**SUBTRACTIVE IMPLEMENTATION**
-  // return A+B
-  //**END**//
-}
-
-
-
-//void forwardBackward(){ 
-//
-//  if(signals[1] != 0){
-//    if(signals[1] < 0){
-//      speeds[1] = abs(signals[1]);
-//      speeds[3] = abs(signals[1]);
-//      speeds[5] = abs(signals[1]);
-//      speeds[7] = abs(signals[1]);
-//      
-//     //**SUBTRACTIVE IMPLEMENTATION**//
-////      speeds[0] = -1*abs(signals[1]);
-////      speeds[2] = -1*abs(signals[1]);
-////      speeds[4] = -1*abs(signals[1]);
-////      speeds[6] = -1*abs(signals[1]);
-//     //**END**//
-//    }else{
-//      speeds[0] = abs(signals[1]);
-//      speeds[2] = abs(signals[1]);
-//      speeds[4] = abs(signals[1]);
-//      speeds[6] = abs(signals[1]);
-//
-//      //**SUBTRACTIVE IMPLEMENTATION**//
-////      speeds[1] = -1*abs(signals[1]);
-////      speeds[3] = -1*abs(signals[1]);
-////      speeds[5] = -1*abs(signals[1]);
-////      speeds[7] = -1*abs(signals[1]);
-//      //**END**//
-//    }
-//  }
-//}
-
-//void strafe(){
-//  if(signals[3] != 0){
-//    if(signals[3] < 0){
-//      speeds[0] = addSpeeds(abs(signals[3]), speeds[0]);
-//      speeds[3] = addSpeeds(abs(signals[3]), speeds[3]);
-//      speeds[5] = addSpeeds(abs(signals[3]), speeds[5]);
-//      speeds[6] = addSpeeds(abs(signals[3]), speeds[6]);
-//
-//      //**SUBTRACTIVE IMPLEMENTATION**//
-////      speeds[1] = addSpeeds(-1*abs(signals[3]), speeds[1]);
-////      speeds[2] = addSpeeds(-1*abs(signals[3]), speeds[2]);
-////      speeds[4] = addSpeeds(-1*abs(signals[3]), speeds[4]);
-////      speeds[7] = addSpeeds(-1*abs(signals[3]), speeds[7]);
-//     //**END**//
-//    }else{
-//      speeds[1] = addSpeeds(abs(signals[3]), speeds[1]);
-//      speeds[2] = addSpeeds(abs(signals[3]), speeds[2]);
-//      speeds[4] = addSpeeds(abs(signals[3]), speeds[4]);
-//      speeds[7] = addSpeeds(abs(signals[3]), speeds[7]);
-//
-//      //**SUBTRACTIVE IMPLEMENTATION**//
-////      speeds[0] = addSpeeds(-1*abs(signals[3]), speeds[0]);
-////      speeds[3] = addSpeeds(-1*abs(signals[3]), speeds[3]);
-////      speeds[5] = addSpeeds(-1*abs(signals[3]), speeds[5]);
-////      speeds[6] = addSpeeds(-1*abs(signals[3]), speeds[6]);
-//     //**END**//
-//    }
-//  }
-//}
-
-//void rotate(){
-//  if(signals[0] != 0){
-//    if(signals[0] < 0){
-//      speeds[0] = addSpeeds(abs(signals[0]), speeds[0]);
-//      speeds[3] = addSpeeds(abs(signals[0]), speeds[3]);
-//      speeds[4] = addSpeeds(abs(signals[0]), speeds[5]);
-//      speeds[7] = addSpeeds(abs(signals[0]), speeds[6]);
-//
-//      //**SUBTRACTIVE IMPLEMENTATION**//
-////      speeds[1] = addSpeeds(-1*abs(signals[0]), speeds[1]);
-////      speeds[2] = addSpeeds(-1*abs(signals[0]), speeds[2]);
-////      speeds[5] = addSpeeds(-1*abs(signals[0]), speeds[4]);
-////      speeds[6] = addSpeeds(-1*abs(signals[0]), speeds[7]);
-//      //**END**//
-//    }else{
-//      speeds[1] = addSpeeds(abs(signals[0]), speeds[1]);
-//      speeds[2] = addSpeeds(abs(signals[0]), speeds[2]);
-//      speeds[5] = addSpeeds(abs(signals[0]), speeds[4]);
-//      speeds[6] = addSpeeds(abs(signals[0]), speeds[7]);
-//
-//      //**SUBTRACTIVE IMPLEMENTATION**//
-////      speeds[0] = addSpeeds(-1*abs(signals[0]), speeds[0]);
-////      speeds[3] = addSpeeds(-1*abs(signals[0]), speeds[3]);
-////      speeds[4] = addSpeeds(-1*abs(signals[0]), speeds[5]);
-////      speeds[7] = addSpeeds(-1*abs(signals[0]), speeds[6]);
-//      //**END**//
-//    }
-//  }
-//}
 
 void lift(){
   //move lift
@@ -342,13 +234,9 @@ void setup() {
   pinMode(FM_LPWM, OUTPUT);
   pinMode(RM_RPWM, OUTPUT);
   pinMode(RM_LPWM, OUTPUT);
- 
-//  pinMode(LIFT_1, OUTPUT);
-//  pinMode(LIFT_2, OUTPUT);
 
   pinMode(INTAKE_1, OUTPUT);
   pinMode(INTAKE_2, OUTPUT);
-//  pinMode(INTAKE_PWM, OUTPUT);
 
   Serial.begin(115200);
 
@@ -369,11 +257,6 @@ void setup() {
 }
 
 void loop() {
-  // put your main code here, to run repeatedly:
-//  for(byte channel = 1; channel <= channelAmount; ++channel){
-//    unsigned bufferValue = channelValues[channel-1];
-//    channelValues[channel-1] = ppm.latestValidChannelValue(channel, bufferValue);
-//  }
 
     //Fly Sky Controller
     
@@ -400,21 +283,6 @@ void loop() {
       speeds[i] = 0;
     }
     motorStates = B11111111;
-//    liftIntakeStates = B00001111;
-  /*
-    Channel 1: R Stick X-axis (Left = Low, Right = High)
-    Channel 2: L Stick Y-axis (Down = Low, Up = High)
-    Channel 3: R Stick Y-axis (Down = Low, Up = High)
-    Channel 4: L Stick X-axis (Left = Low, Right = High)
-    Channel 5: L Bumper Dial (Right = Low, Left = High)
-    Channel 6: Back Buttons L AND R
-    Channel 7: R Middle Switch (Up = Low, Down = High)
-    Channel 8: L Middle Switch (Up = Low, Down = High)
-    Channel 9: None
-    Channel 10: None
-    */
-  // lStickNeutral = (channelValues[3] < NEUTRAL_PPM + TOLERANCE) && (channelValues[3] > NEUTRAL_PPM - TOLERANCE) && (channelValues[1] < NEUTRAL_PPM + TOLERANCE) && (channelValues[1] > NEUTRAL_PPM - TOLERANCE);
-  // rStickNeutral = (channelValues[0] < NEUTRAL_PPM + TOLERANCE) && (channelValues[0] > NEUTRAL_PPM - TOLERANCE);
 
   //Movements
   for(byte key = 0; key < 4; ++key){
@@ -459,7 +327,7 @@ void loop() {
   }
 
   //Big Rock Claw Servo (Position)
-//  rock_claw_pos += signals[2]/255.0;
+
   rock_claw_pos = 1.0*(pwm.getPWM(ROCK_CLAW1, true)-SERVOMIN[ROCK_CLAW1])/(SERVOMAX[ROCK_CLAW1]-SERVOMIN[ROCK_CLAW1])+signals[2]*1.0/CLAW_SPEED/255;
   Serial.println("rock claw pos: "+String(rock_claw_pos)+"\t"+String(pwm.getPWM(ROCK_CLAW1, true))+"\t"+String(CLAW_SPEED));
   if(rock_claw_pos>1){
@@ -480,12 +348,8 @@ void loop() {
 //        signals[key] = -1*signals[key];
 //      }
 //    }
-  //Principle: So long as both control voltages are equal or close to equal there should be a braking effect in the motor, so should just add the voltages tgt up to 255 (I think?). 
-  //Alternate implementation would be to subtract the analog value on the respective "0"s in addition to adding on the "1"s and set any -ve values to 0 before the final motor run step
   analogMixing();
-//  forwardBackward();
-//  strafe();
-//  rotate();
+
   lift();
   intake();
 //  motorLogicCheck();
@@ -496,20 +360,9 @@ void loop() {
 
   //Big Rock Claw Servo
   runServo(ROCK_CLAW1, rock_claw_pos);
-//  runServo(ROCK_CLAW2,1.0-rock_claw_pos);
 
   //Flag Claw Servo, 0 or 1 (open or close)
   runServo(FLAG_CLAW, signals[6]/255);
-
-//  uint16_t val = 400;
-//  
-//  if(signals[6]==255){
-//    val = 600;
-//  }
-
-//  pwm.setPWM(FLAG_CLAW,0,signals[6]/255);
-
-  
   
   Serial.println(String(signals[0])+"\t"+String(signals[1])+"\t"+String(signals[2])+"\t"+String(signals[3])+"\t"+String(signals[4])+"\t"+String(signals[5])+"\t"+String(signals[6]));
   delay(10);
