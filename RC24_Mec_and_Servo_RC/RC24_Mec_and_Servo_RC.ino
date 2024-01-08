@@ -264,9 +264,9 @@ void runServo(int servonum, float pos){
 
   uint16_t val = pos*(SERVOMAX[servonum]-SERVOMIN[servonum])+SERVOMIN[servonum];
 
-  Serial.println(String(servonum)+" Servo pos: "+String(val));
+//  Serial.println(String(servonum)+" Servo pos: "+String(val));
 
-  pwm.setPWM(servonum, 0, val);
+  pwm.setPin(servonum, val);
 
 }
 
@@ -436,6 +436,11 @@ void loop() {
     }else{
       signals[4] = 0;
     }
+    if(abs(PS4.RStickY())>PS4_THRESH){
+      signals[2] = (int)(PS4.RStickY()/128.0*255);
+    }else{
+      signals[2] = 0;
+    }
     signals[5] = PS4.R2Value()-PS4.L2Value();
     if(PS4.R1()){
       signals[6] = 255;
@@ -492,7 +497,7 @@ void loop() {
 //  runServo(ROCK_CLAW2,1.0-rock_claw_pos);
 
   //Flag Claw Servo, 0 or 1 (open or close)
-  runServo(FLAG_CLAW, signals[6]/255);
+//  runServo(FLAG_CLAW, signals[6]/255);
 
 //  uint16_t val = 400;
 //  
