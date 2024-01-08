@@ -290,56 +290,63 @@ void setup() {
 
 void auton(){
 
+  float TIME_MULTI = 1.0;
+
   int low_speed = 100;
   int medium_speed = 150;
   int top_speed = 200;
 
   int stop_time = 2000;
 
+  //180cm in 3s
+  //270 degrees in 3s
+
+  
+
   Serial.println("Intake ON");
   intake_auto(-medium_speed);
 
-  delay(2000);
+  delay(stop_time);
 
   Serial.println("Reversing");
-  moveMotors(-low_speed,0,0,3);
+  moveMotors(-low_speed,0,0,1.3*TIME_MULTI);
 
-  delay(2000);
+  delay(stop_time);
 
   Serial.println("Rotate CCW");
-  moveMotors(0,0,-low_speed,3);
+  moveMotors(0,0,-low_speed,TIME_MULTI);
 
-  delay(2000);
+  delay(stop_time);
 
   Serial.println("Forward");
-  moveMotors(low_speed,0,0,2);
+  moveMotors(low_speed,0,0,1*TIME_MULTI);
 
-  delay(2000);
+  delay(stop_time);
 
   Serial.println("Reversing");
-  moveMotors(-low_speed,0,0,15);
+  moveMotors(-low_speed,0,0,6*TIME_MULTI);
 
-  delay(2000);
+  delay(stop_time);
 
   Serial.println("Forward");
-  moveMotors(low_speed,0,0,0.5);
+  moveMotors(low_speed,0,0,0.5*TIME_MULTI);
 
-  delay(2000);
+  delay(stop_time);
 
   Serial.println("Rotate CCW");
-  moveMotors(0,0,-low_speed,3);
+  moveMotors(0,0,-low_speed,TIME_MULTI);
 
-  delay(2000);
+  delay(stop_time);
 
   Serial.println("Reversing");
-  moveMotors(-low_speed,0,0,3);
+  moveMotors(-low_speed,0,0,1.5*TIME_MULTI);
 
-  delay(2000);
+  delay(stop_time);
 
   Serial.println("Depositing");
   intake_auto(medium_speed);
 
-  delay(2000);
+  delay(stop_time);
 }
 
 void loop() {
