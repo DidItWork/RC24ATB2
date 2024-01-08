@@ -141,13 +141,10 @@ void intake(){
   if(speeds[5]>0){
     digitalWrite(INTAKE_1, HIGH);
     digitalWrite(INTAKE_2, LOW);
-//    analogWrite(INTAKE_PWM, speeds[5]);
     pwm.setPin(INTAKE_PWM, speeds[5]);
   }else{
     digitalWrite(INTAKE_1, LOW);
     digitalWrite(INTAKE_2, HIGH);
-//    analogWrite(INTAKE_PWM, -speeds[5]);
-    Serial.println(String(-speeds[5]));
     pwm.setPin(INTAKE_PWM, -speeds[5]);
   }
 }
@@ -224,7 +221,7 @@ void stopMotors(){
   analogWrite(RM_LPWM, 0);
 }
 
-void move(int speed_x, int speed_y, int speed_r, float duration){
+void moveMotors(int speed_x, int speed_y, int speed_r, float duration){
 
   signals[0] = speed_r;
   signals[1] = speed_x;
@@ -275,13 +272,15 @@ void setup() {
   // IBus.begin(Serial2,1); 
 
   //Servo stuff
-  // pwm.begin();
+  pwm.begin();
 
-  // pwm.setOscillatorFrequency(27000000);
-  // pwm.setPWMFreq(SERVO_FREQ);  // Analog servos run at ~50 Hz updates
+  pwm.setOscillatorFrequency(27000000);
+  pwm.setPWMFreq(SERVO_FREQ);  // Analog servos run at ~50 Hz updates
 
   //PS4 Controller
   // PS4.begin();
+
+  Serial.println("Starting Auton");
 
   delay(1000);
 
@@ -295,32 +294,52 @@ void auton(){
   int medium_speed = 150;
   int top_speed = 200;
 
+  int stop_time = 2000;
+
   Serial.println("Intake ON");
   intake_auto(-medium_speed);
 
+  delay(2000);
+
   Serial.println("Reversing");
-  move(-low_speed,0,0,3);
+  moveMotors(-low_speed,0,0,3);
+
+  delay(2000);
 
   Serial.println("Rotate CCW");
-  move(0,0,-low_speed,3);
+  moveMotors(0,0,-low_speed,3);
+
+  delay(2000);
 
   Serial.println("Forward");
-  move(low_speed,0,0,2);
+  moveMotors(low_speed,0,0,2);
+
+  delay(2000);
 
   Serial.println("Reversing");
-  move(-low_speed,0,0,15);
+  moveMotors(-low_speed,0,0,15);
+
+  delay(2000);
 
   Serial.println("Forward");
-  move(low_speed,0,0,0.5);
+  moveMotors(low_speed,0,0,0.5);
+
+  delay(2000);
 
   Serial.println("Rotate CCW");
-  move(0,0,-low_speed,3);
+  moveMotors(0,0,-low_speed,3);
+
+  delay(2000);
 
   Serial.println("Reversing");
-  move(-low_speed,0,0,3);
+  moveMotors(-low_speed,0,0,3);
+
+  delay(2000);
 
   Serial.println("Depositing");
   intake_auto(medium_speed);
+
+  delay(2000);
 }
 
 void loop() {
