@@ -55,7 +55,7 @@ int mecWhlCalcHolder[4] = {0,0,0,0};
 int speeds[7] = {0,0,0,0,0,0,0}; //[FM_R, FM_L, RM_R, RM_L, LIFT, INTAKE, ROCK_CLAW]
 double rock_claw_pos = 0.0; //0.0 - 1.0
 // int dir[2] = {0,0};
-int SERVOMIN[13] = {180,150,180,180,180,180,180,180,180,180,180,180,180};
+int SERVOMIN[13] = {225,150,225,225,225,225,225,225,225,225,225,225,225};
 int SERVOMAX[13] = {350,500,350,350,350,350,350,350,350,350,350,350,350};
 IBusBM IBus;
 bool preset = false;
