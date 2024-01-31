@@ -23,16 +23,16 @@
 
 - FlySky Controller
     1. Pivot Turn
-    1. Forward Backward
-    1. **EMPTY**
-    1. Left Right
-    1. Rock Claw
-    1. Lift
-    1. Intake In
-    1. Intake Out 
-    1. Flag Claw
-    1. **EMPTY**
+    2. Forward Backward
+    3. **EMPTY**
+    4. Left Right
+    5. Rock Claw
+    6. Lift
+    7. Intake In
+    8. Intake Out 
+    9. Flag Claw
+    10. **EMPTY**
 - PS4 Controller
     1. Left Joystick Y : Lift
-    1. R1 and L1 : Flag Claw
-    1. R2 and L2 : Intake
+    2. R1 and L1 : Flag Claw
+    3. R2 and L2 : Intake
